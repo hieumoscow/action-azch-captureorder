@@ -14,16 +14,19 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     
     - run: |
-        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
-        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
+        docker build . -t hieuacr.azurecr.io/k8sdemo:${{ github.sha }}
+        docker push hieuacr.azurecr.io/k8sdemo:${{ github.sha }}
       
-    - uses: Azure/k8s-set-context@v1
+    # Set the target AKS cluster.
+    - uses: Azure/aks-set-context@v1
       with:
-        kubeconfig: ${{ secrets.KUBE_CONFIG }}
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: githubactionaks
+        resource-group: githubactionaksrg
         
     - uses: Azure/k8s-create-secret@v1
       with:
-        container-registry-url: contoso.azurecr.io
+        container-registry-url: hieuacr.azurecr.io
         container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
@@ -31,9 +34,9 @@ jobs:
     - uses: Azure/k8s-deploy@v1
       with:
         manifests: |
-          manifests/deployment.yml
-          manifests/service.yml
+          captureorder-deployment.yaml
+          captureorder-service.yaml
         images: |
-          demo.azurecr.io/k8sdemo:${{ github.sha }}
+          hieuacr.azurecr.io/k8sdemo:${{ github.sha }}
         imagepullsecrets: |
           demo-k8s-secret
